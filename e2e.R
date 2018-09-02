@@ -1,8 +1,14 @@
-rm(list = ls())
 
 # source("SetEnvironment.R")
 # ******************************************************SetEnvironment.R
+#rm(list = ls())
+pgmStart <- Sys.time()
+message("Execution started: ",Sys.time(),"\n")
+Sys.sleep(3)
+# source("SetEnvironment.R")
+# ******************************************************SetEnvironment.R
 DatasetFolder <- "D:/DSCapstoneRNew"
+DatasetName <- "DSCapstoneR"
 
 myScriptsDir <- paste0(DatasetFolder,"/Scripts")
 myRawDataDir <- paste0(DatasetFolder,"/RawData")
@@ -10,36 +16,57 @@ myRefDataDir <- paste0(DatasetFolder,"/RefData")
 mySampleDataDir <- paste0(DatasetFolder,"/SampleData")
 myGenDataDir <- paste0(DatasetFolder,"/GenData")
 myReportsDir <- paste0(DatasetFolder,"/Reports")
-# Seed value for TextMining program 
-seedValue <- 08242018
+
+#DatasetFolder <- "/home/bkrishna2006_gmail_com/"
+#DatasetName <- "DSCapstoneR"
+#myScriptsDir <- paste0(DatasetFolder,DatasetName,"/Scripts")
+#myRawDataDir <- paste0(DatasetFolder,DatasetName,"/RawData")
+#myRefDataDir <- paste0(DatasetFolder,DatasetName,"/RefData")
+#mySampleDataDir <- paste0(DatasetFolder,DatasetName,"/SampleData")
+#myGenDataDir <- paste0(DatasetFolder,DatasetName,"/GenData")
+#myReportsDir <- paste0(DatasetFolder,DatasetName,"/Reports")
+
+# Seed value for TextMining program
+seedValue <- 08272018
 # ******************************************************SetEnvironment.R
 
 #source("DataEngineering.R")
 # ******************************************************DataEngineering.R
-setwd(myRawDataDir)
-language = "en_US"
-iteration = "01"
-myNewDataFiles <- list.files(path = getwd(),pattern = "*.txt")
+#setwd(myRawDataDir)
+# ******************************************************SetEnvironment.R
+
+#source("DataEngineering.R")
+# ******************************************************DataEngineering.R
+#setwd(myRawDataDir)
+setwd(mySampleDataDir)
+message("Currrent Dir: ",mySampleDataDir, "\n")
+#language = "en_US"
+#iteration = "01"
 # for Linux
 #system("split -n 5 -d --additional-suffix=.txt en_US.news.txt news")
 #system("split -n 5 -d --additional-suffix=.txt en_US.blogs.txt blogs")
 #system("split -n 5 -d --additional-suffix=.txt en_US.twitter.txt twitter")
 
-# for Windows change accordingly
-system("fsplit -n 5 -d --additional-suffix=.txt en_US.news.txt news")
-system("split -n 5 -d --additional-suffix=.txt en_US.blogs.txt blogs")
-system("split -n 5 -d --additional-suffix=.txt en_US.twitter.txt twitter")
+myNewDataFiles <- list.files(path=getwd(), pattern = paste0("*",iteration, ".txt"))
 
-
-myNewDataFiles <- list.files(path=getwd(), pattern = paste0(iteration, "*.txt"))
-
+message("Files about to be read in this iteration(myNewDataFiles): ",myNewDataFiles,"\n")
+Sys.sleep(3)
 startTime <- Sys.time()
+message("Reading Sample file sets one by one ....","\n")
+Sys.sleep(3)
+
 myNewDataset <- lapply(myNewDataFiles,function(x){
-  return(list(fileName=x,fileContent=readLines(x,skipNul = T) ))
+  return(list(fileName=x,fileContent=readLines(x,encoding="Latin-1",skipNul = T) ))
 })
 endTime <- Sys.time()
 
 rawDataFileReadTime <- endTime - startTime
+
+message("Completed reading Sample set files one by one ....","\n")
+Sys.sleep(3)
+
+message("Time taken to read first set of all 3 files:  ",rawDataFileReadTime,"\n")
+Sys.sleep(3)
 # ******************************************************DataEngineering.R
 
 
@@ -53,21 +80,30 @@ setwd(mySampleDataDir)
 #  Here, using the Text-mining package(tm) of R, a document corpus is created and several cleansing functions are applied to clean up the data, like striping whitespaces, removing Punctuations,Numbers, stop-words and Profanity words.  Stemming has not been done, considering the possible effect this might have on word-prediction accuracy in the context of blogs & tweets if not news.
 #Removing profane words using the two profane word collections jointly,with the lapply function didn't work properly and failed to remove many listed profane words. Hence, this was done separately for the two profane word collections.
 #```{R createDocCorpus, echo=F}
+
 library(tm)
 library(data.table)
-
-myNewCorpus <- Corpus(DirSource(getwd(),pattern = "*Sample.txt"))
-# Cleaning the corpus for 1.Whitespaces 2. Punctuation 3. Numbers 4. Stopwords 5. Profanity words etc.
+message("Creating document corpus...","\n")
+Sys.sleep(3)
+myNewCorpus <- Corpus(DirSource(getwd(),pattern = paste0("*",iteration,".txt")))
+# Cleaning the corpus for 1.Whitespaces 2. Punctuation 3. Numbers 4. Capitals.
 myNewCorpus <- tm_map(myNewCorpus,stripWhitespace)
 myNewCorpus <- tm_map(myNewCorpus,removePunctuation)
 myNewCorpus <- tm_map(myNewCorpus,removeNumbers)
 myNewCorpus <- tm_map(myNewCorpus,tolower)
 
+message("Completed cleaning the Corpus for 1.Whitespaces 2. Punctuation 3. Numbers 4. Capitals","\n")
+Sys.sleep(3)
+
 startTime <- Sys.time()
+message("Removing English stopwords..","\n")
+Sys.sleep(3)
 myNewCorpus <- tm_map(myNewCorpus,removeWords,stopwords("english"))
 endTime <- Sys.time()
 removingEngStopwordsTime <- endTime - startTime
 
+message("Completed Stopwords removal...Time taken: ",removingEngStopwordsTime,"\n")
+Sys.sleep(3)
 # Download RefData
 swearWordURL <- "http://www.bannedwordlist.com/lists/swearWords.txt"
 badWordURL <- "http://www.cs.cmu.edu/~biglou/resources/bad-words.txt"
@@ -90,9 +126,10 @@ badWords.df <- data.frame(word=readLines("badWords.txt"))
 
 #```{R removingProfanityWords, echo=TRUE}
 # Removing profane words separately using the two profane lists, as doing this in one shot using lapply function of plyr package didn't work properly and failed to remove many listed profane words.
-
 swearWords.df <- swearWords.df[!duplicated(swearWords.df),]
 badWords.df <- badWords.df[!duplicated(badWords.df),]
+message("Removing profane words","\n")
+Sys.sleep(3)
 
 startTime <- Sys.time()
 myNewCorpus <- tm_map(myNewCorpus,removeWords,swearWords.df)
@@ -101,6 +138,8 @@ endTime <- Sys.time()
 
 removingProfWordsTime = endTime - startTime
 
+message("Removed profane words,time taken :",removingProfWordsTime,"\n")
+Sys.sleep(3)
 rm(swearWordURL,
    badWordURL,
    swearWords.df,
@@ -110,29 +149,41 @@ gc()
 #```
 # 5b. Additional cleansing
 
-removeNumeric <- 
-  content_transformer(function(x) 
+removeNumeric <-
+  content_transformer(function(x)
     gsub('[0-9]+', '', x)
   )
 
-removeNonASCII <- 
-  content_transformer(function(x) 
+removeNonASCII <-
+  content_transformer(function(x)
     iconv(x, "latin1", "ASCII", sub="")
   )
-
-modifyURL1 <- 
-  content_transformer(function(x) 
+modifyURL1 <-
+  content_transformer(function(x)
     gsub("www",replacement = "www.",x)
   )
-modifyURL2 <- 
-  content_transformer(function(x) 
+modifyURL2 <-
+  content_transformer(function(x)
     gsub("com$",replacement = ".com",x)
   )
 
+message("Additional cleansing....:","\n")
+Sys.sleep(3)
 myNewCorpus <- tm_map(myNewCorpus, removeNumeric)
 myNewCorpus <- tm_map(myNewCorpus, removeNonASCII)
 myNewCorpus <- tm_map(myNewCorpus, modifyURL1)
 myNewCorpus <- tm_map(myNewCorpus, modifyURL2)
+
+message("Completed Additional cleansing....:","\n")
+Sys.sleep(3)
+
+message("Writing the corpus to local disk..:","\n")
+Sys.sleep(3)
+#writeCorpus(myNewCorpus)
+writeCorpus(myNewCorpus, path = myGenDataDir, filenames = paste0("Corpus",iteration,"_",seq_along(myNewCorpus), ".txt", sep = ""))
+
+message("Completed writing the corpus to disk...:","\n")
+Sys.sleep(3)
 
 rm(removeNumeric,
    removeNonASCII,
@@ -140,13 +191,14 @@ rm(removeNumeric,
    modifyURL2
 )
 gc()
-
 # ******************************************************TextMining.R
 
 #source("N-gramsCreation.R")
 # ******************************************************N-gramsCreation.R
 library(quanteda)
 
+message("Creating tokens using quanteda..:","\n")
+Sys.sleep(3)
 toks <- tokens(corpus(myNewCorpus))
 
 ngrams <- tokens_ngrams(toks, n = 1:4,concatenator = ' ')
@@ -155,6 +207,9 @@ bigrams <- tokens_ngrams(toks,n=2,concatenator = ' ')
 trigrams <- tokens_ngrams(toks,n=3,concatenator = ' ')
 quadgrams <- tokens_ngrams(toks,n=4,concatenator = ' ')
 
+message("Completed creating tokens..:","\n")
+Sys.sleep(3)
+
 #5. Creating Document feature Matrix
 ngram_dfm <- dfm(ngrams, verbose = FALSE)
 unigram_dfm <- dfm(unigrams, verbose = FALSE)
@@ -162,9 +217,11 @@ bigram_dfm <- dfm(bigrams, verbose = FALSE)
 trigram_dfm <- dfm(trigrams, verbose = FALSE)
 quadgram_dfm <- dfm(quadgrams, verbose = FALSE)
 
-# 6 How many unique words do you need in a frequency sorted dictionary to 
+# 6 How many unique words do you need in a frequency sorted dictionary to
 # cover 50% of all word instances in the language? 90%?
 # Define function to calculate coverage
+message("Determing n-grams coverage.:","\n")
+Sys.sleep(3)
 CoverageCalc <- function (dfm, percent) {
   words <- sort(colSums(dfm), decreasing = TRUE)
   allwords <- length(dfm@i)
@@ -174,7 +231,7 @@ CoverageCalc <- function (dfm, percent) {
     sum <- sum + words[[i]]
     if(sum >= (percent * allwords)) break
   }
-  i        
+  i
 }
 
 unigramCov50 <- CoverageCalc(unigram_dfm, 0.5)
@@ -202,10 +259,10 @@ Coverage_Stat <- matrix(data = c("Type", "50%", "75%", "90%",
                         ncol = 4,
                         byrow = TRUE
 )
-
-
-write.csv(Coverage_Stat,file = "NgramsCoverageStat.csv")
-# from Coverage statistics table, it is decided to go with whatever is required for 90% coverage, 
+message("Writing coverage statistics to disk for reference....")
+Sys.sleep(3)
+write.csv(as.matrix(Coverage_Stat),file = "NgramsCoverageStat.csv")
+# from Coverage statistics table, it is decided to go with whatever is required for 90% coverage,
 # as we are working on a small sample of 1 % of the data.
 
 # for unigram
@@ -237,7 +294,11 @@ quadgramDf_sorted <- quadgramDf[order(quadgramDf$words, -quadgramDf$freq),]
 ngramDf <- rbind(unigramDf,bigramDf,trigramDf,quadgramDf)
 ngramDf_sorted <- ngramDf[order(ngramDf$words, -ngramDf$freq),]
 
+message("Writing NgramDf_sorted.csv file...","\n")
+Sys.sleep(3)
 write.csv(x = ngramDf_sorted,file = "NgramDf_sorted.csv")
+message("Completed writing NgramDf_sorted.csv file...","\n")
+Sys.sleep(3)
 
 rm(unigramVector,bigramVector,trigramVector,quadgramVector,
    unigramCov50,bigramCov50,trigramCov50,quadgramCov50,
@@ -259,7 +320,6 @@ df1 <- mutate(unigramDf_sorted,prob=round(freq/sum(freq),7))
 df2 <- mutate(bigramDf_sorted,prob=round(freq/sum(freq),7))
 df3 <- mutate(trigramDf_sorted,prob=round(freq/sum(freq),7))
 df4 <- mutate(quadgramDf_sorted,prob=round(freq/sum(freq),7))
-
 # drop all n-gram occurances where the probability is zero.
 #df1sel <- dplyr::filter(df1,(prob != 0 && freq > 1))
 #df2sel <- dplyr::filter(df2,(prob != 0 && freq > 1))
@@ -273,7 +333,7 @@ df3sel <- dplyr::filter(df3,(freq > 1))
 df4sel <- dplyr::filter(df4,(freq > 1))
 
 
-# Split the n-gram occurances 
+# Split the n-gram occurances
 
 # bigrams split
 df2selNew <- as.data.frame(matrix(nrow = length(df2sel$words),ncol = 1))
@@ -285,6 +345,7 @@ for (i in 1:length(df2sel$words) ) {
   df2selNew$prob <- df2sel$prob
   df2selNew$predNext[i] <- splitList.i[[1]][2]
 }
+
 df2selNew$V1 <- NULL
 #View(df2selNew)
 
@@ -321,7 +382,13 @@ df4selNew$V1 <- NULL
 dfAllselNew <- rbind(df2selNew,df3selNew,df4selNew)
 
 setwd(myGenDataDir)
-write.csv(x = dfAllselNew,file = "dfAllselNew.csv")
+message("Writing dfAllselNew to disk..","\n")
+Sys.sleep(3)
+write.csv(x = dfAllselNew,file = paste0("dfAllselNew",iteration,".csv"))
+Sys.sleep(3)
+
+message("Completed writing dfAllselNew to disk..","\n")
+Sys.sleep(3)
 
 rm(df1, df1sel,
    df2, df2sel,
@@ -330,5 +397,7 @@ rm(df1, df1sel,
 )
 
 rm(i, splitList.i)
-
-# ******************************************************TextPredictionModelling.R
+pgmEnd <- Sys.time()
+execTime <- pgmEnd - pgmStart
+message("Execution ended: ",pgmEnd,"\n")
+message("Execution duration: ",execTime,"\n")
