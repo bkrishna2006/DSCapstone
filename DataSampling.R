@@ -1,15 +1,15 @@
+DatasetFolder <- "D:/DSCapstoneRNew"
 
-DatasetName <- "DSCapstoneR"
-mySampleDataDir <- paste0("D:/",DatasetName,"/SampleData")
+#mySampleDataDir <- paste0(DatasetFolder,DatasetName,"/SampleData")
+mySampleDataDir <- paste0(DatasetFolder,"/SampleDataTest")
 
 setwd(mySampleDataDir)
 #myCon <- file(description = "newsSample.txt",method = "r")
-myCon <- file(description = "smalltestfile.txt",method = "r")
+#myCon <- file(description = "smalltestfile.txt",method = "r")
+myCon <- file(description = "newsSample.txt",method = "r")
 newsSampleBef <- readLines(con = myCon, skipNul = T)
 nRows=length(newsSampleBef)
 newsSample <- sample(newsSampleBef,size = nRows)
-newsSampleBef
-newsSample
 
 nChunks <- 3
 
@@ -42,7 +42,11 @@ for (i in 1:nChunks) {
 }
   }
 
-close(myCon)
-newsChunks
 
-setwd(mySampleDataDir)
+newsChunks
+newsChunksNew <- print(unlist(newsChunks))
+for (i in 1:nChunks) {
+  newsChunksNew <- print(unlist(newsChunks[[i]]))
+  write(newsChunksNew,file = paste0("newsSample",i, ".txt"))
+}
+close(myCon)
